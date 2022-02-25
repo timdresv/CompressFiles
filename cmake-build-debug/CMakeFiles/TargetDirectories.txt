@@ -1,0 +1,3 @@
+D:/Tima/CompressFiles/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/Tima/CompressFiles/cmake-build-debug/CMakeFiles/CompressFiles.dir
+D:/Tima/CompressFiles/cmake-build-debug/CMakeFiles/rebuild_cache.dir

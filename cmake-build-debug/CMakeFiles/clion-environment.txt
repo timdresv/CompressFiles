@@ -1,0 +1,4 @@
+ToolSet: w64 9.0 (local)@C:\Program Files\mingw-w64\winlibs-x86_64-posix-seh-gcc-11.2.0-llvm-13.0.0-mingw-w64ucrt-9.0.0-r2\mingw64
+Options: 
+
+Options:-DCMAKE_CXX_COMPILER=C:/Program Files/mingw-w64/winlibs-x86_64-posix-seh-gcc-11.2.0-llvm-13.0.0-mingw-w64ucrt-9.0.0-r2/mingw64/bin/g++.exe

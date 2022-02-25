@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+D:/Tima/CompressFiles/main.cpp
+iostream
+-
+windows.h
+-
+string
+-
+vector
+-
+list
+-
+unordered_map
+-
+ctime
+-
+
