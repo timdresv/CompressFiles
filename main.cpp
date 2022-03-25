@@ -230,6 +230,7 @@ private:
         for (auto &key : map_frequency) {
             vect.push_back(Character(key.first, key.second, ""));
         }
+        std::unordered_map<char, uint64_t> ().swap(map_frequency);
         sort(vect.begin(), vect.end());
         vect = AlgShenFano(vect, in_buf_size);
         uint64_t code_size = 0;
@@ -240,7 +241,15 @@ private:
             code_size += vect[i].code.length() * vect[i].count;
             map_size += (((int) vect[i].code.length() - 1) / 8 + 1) + 2;
         }
+        for (int i = 0; i < vect.size(); i++) {
+            vect[i].code.erase();
+        }
+        std::vector<Character> ().swap(vect);
         CompressMap(code_size, map_size, map_codes);
+        for (auto &key : map_codes) {
+            key.second.erase();
+        }
+        std::unordered_map<char, std::string> ().swap(map_codes);
     }
 
 
@@ -285,6 +294,7 @@ private:
         for (auto &key : map_frequency) {
             lst.push_back(Node(key.first, key.second, ""));
         }
+        std::unordered_map<char, uint64_t> ().swap(map_frequency);
         lst.sort();
         std::list<Node> tree_list;
         bool inserted;
@@ -315,7 +325,19 @@ private:
         int map_size = 0;
         std::unordered_map<char, std::string> map_codes;
         TreeToMap(&lst.front(), code_size, map_size, map_codes);
+        for (auto iter = tree_list.begin(); iter != tree_list.end(); iter++) {
+            iter->code.erase();
+        }
+        std::list<Node> ().swap(tree_list);
+        for (auto iter = lst.begin(); iter != lst.end(); iter++) {
+            iter->code.erase();
+        }
+        std::list<Node> ().swap(lst);
         CompressMap(code_size, map_size, map_codes);
+        for (auto &key : map_codes) {
+            key.second.erase();
+        }
+        std::unordered_map<char, std::string> ().swap(map_codes);
     }
 
 
@@ -392,7 +414,8 @@ private:
         }
         out_buf_size = c;
         UnmapViewOfFile(out_buffer);
-        SetFilePointer(out_file, out_buf_size % ((uint64_t) (1) << 32), (PLONG) (out_buf_size / ((uint64_t) (1) << 32)),
+        SetFilePointer(out_file, out_buf_size % ((uint64_t) (1) << 32),
+                       (PLONG) (out_buf_size / ((uint64_t) (1) << 32)),
                        FILE_BEGIN);
         SetEndOfFile(out_file);
     }
@@ -404,8 +427,9 @@ private:
             out_buf_size += in_buffer[c++] * ((uint64_t) 1 << 8 * (3 - i));
         }
         Create();
+        int n;
         while (c < in_buf_size && c2 < out_buf_size) {
-            int n = in_buffer[c++];
+            n = in_buffer[c++];
             if (n < 128) {
                 for (int i = 0; i < n; i++) {
                     out_buffer[c2++] = in_buffer[c];
@@ -427,7 +451,7 @@ private:
         uint64_t c = 0;
         out_buffer[c++] = distance(algorithms.begin(),
                                    find(algorithms.begin(), algorithms.end(), algorithm));//algorithm code(1B)
-        std::vector<std::string> block(block_size);
+        std::vector<std::vector<char>> block(block_size);
         for (uint64_t i = 0; i < in_buf_size; i += block_size) {
             if (block_size > in_buf_size - i) {
                 block_size = in_buf_size - i;
@@ -435,23 +459,27 @@ private:
             }
             for (int j = 0; j < block_size; j++) {
                 for (int l = j; l < block_size; l++) {
-                    block[j] += in_buffer[i + l];
+                    block[j].push_back(in_buffer[i + l]);
                 }
                 for (int l = 0; l < j; l++) {
-                    block[j] += in_buffer[i + l];
+                    block[j].push_back(in_buffer[i + l]);
                 }
             }
-            block[0] += "0";
+            block[0].push_back('\255');
             sort(block.begin(), block.end());
             for (int j = 0; j < block_size; j++) {
                 out_buffer[c++] = block[j][block_size - 1];
-                if (block[j].length() != block_size) {
+                if (block[j].size()==block_size+1) {
                     out_index = j;
                 }
-                block[j] = "";
+                block[j].clear();
             }
             out_buffer[c++] = out_index;
         }
+        for (int i = 0; i < block.size(); i++) {
+            std::vector<char> ().swap(block[i]);
+        }
+        std::vector<std::vector<char>> ().swap(block);
     }
 
     void DemodificationBWT() {
@@ -459,13 +487,13 @@ private:
         out_buf_size = in_buf_size;
         Create();
         uint64_t c = 0;
-        std::string block, block_sort;
+        std::vector<char> block, block_sort;
         std::vector<int> key(block_size);
         for (uint64_t i = 1; i < in_buf_size; i += block_size + 1) {
             block_size = (block_size < in_buf_size - 1 - i) ? block_size : in_buf_size - 1 - i;
-            block = "";
+            block.clear();
             for (int j = 0; j < block_size; j++) {
-                block += in_buffer[i + j];
+                block.push_back(in_buffer[i + j]);
             }
             out_index = in_buffer[i + block_size];
             block_sort = block;
@@ -492,6 +520,9 @@ private:
                 out_buffer[c++] = block[ind];
             } while (ind != out_index);
         }
+        std::vector<char> ().swap(block_sort);
+        std::vector<char> ().swap(block);
+        std::vector<int> ().swap(key);
         out_buf_size = c;
         UnmapViewOfFile(out_buffer);
         SetFilePointer(out_file, out_buf_size % ((uint64_t) (1) << 32), (PLONG) (out_buf_size / ((uint64_t) (1) << 32)),
@@ -553,6 +584,7 @@ public:
             std::cout << "Algorithm " << algorithm << ": " << std::endl;
             std::cout << "\tSource file size: " << in_buf_size / 1024.0 << " Kb" << std::endl;
             std::cout << "\tCompressed file size: " << out_buf_size / 1024.0 << " Kb" << std::endl;
+            std::cout << "\tFactor of compressing: " << (double) out_buf_size / in_buf_size << std::endl;
             std::cout << "\tTime compressing: " << time_alg / 1000.0 << " sec" << std::endl;
             std::cout << std::endl;
         } else if (mode == "decompress") {
@@ -582,6 +614,7 @@ std::string OpenFileDialog() {
     if (GetOpenFileName(&ofn) == TRUE) {
         return ofn.lpstrFile;
     } else {
+        throw "Choose File";
         return nullptr;
     }
 }
@@ -596,10 +629,11 @@ int main() {
             std::cout << "Enter compression algorithm (SHF/HUFF/RLE/BWT): ";
             std::cin >> alg;
         }
-        input = OpenFileDialog();
         try {
-            Compression cmp(input, mode, alg);
-            cmp.PrintInformation();
+            input = OpenFileDialog();
+            Compression *cmp = new Compression(input, mode, alg);
+            cmp->PrintInformation();
+            delete cmp;
         }
         catch (const char *msg) {
             std::cerr << msg << std::endl;
