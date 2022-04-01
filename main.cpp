@@ -11,7 +11,7 @@ private:
     std::vector<std::string> algorithms = {"SHF", "HUFF", "RLE", "BWT"};
     std::string dir_name, in_file_name, out_file_name;
     std::string mode, algorithm;
-    HANDLE in_file, out_file;
+    HANDLE in_file, out_file, in_file_map, out_file_map;
     uint64_t in_buf_size, out_buf_size;
     BYTE *in_buffer, *out_buffer;
     clock_t time_alg;
@@ -24,7 +24,7 @@ private:
         if (err != 0)
             throw "Can't open file";
         in_buf_size = GetFileSize(in_file, nullptr);
-        HANDLE in_file_map = CreateFileMapping(in_file, nullptr, PAGE_READONLY, 0, in_buf_size, in_file_name.c_str());
+        in_file_map = CreateFileMapping(in_file, nullptr, PAGE_READONLY, 0, in_buf_size, in_file_name.c_str());
         in_buffer = (BYTE *) MapViewOfFile(in_file_map, FILE_MAP_READ, 0, 0, in_buf_size);
         CloseHandle(in_file_map);
     }
@@ -35,8 +35,7 @@ private:
         DWORD err = GetLastError();
         if (err != 0)
             throw "Can't create file";
-        HANDLE out_file_map = CreateFileMapping(out_file, nullptr, PAGE_READWRITE, 0, out_buf_size,
-                                                out_file_name.c_str());
+        out_file_map = CreateFileMapping(out_file, nullptr, PAGE_READWRITE, 0, out_buf_size, out_file_name.c_str());
         out_buffer = (BYTE *) MapViewOfFile(out_file_map, FILE_MAP_ALL_ACCESS, 0, 0, out_buf_size);
         CloseHandle(out_file_map);
     }
@@ -230,7 +229,7 @@ private:
         for (auto &key : map_frequency) {
             vect.push_back(Character(key.first, key.second, ""));
         }
-        std::unordered_map<char, uint64_t> ().swap(map_frequency);
+        std::unordered_map<char, uint64_t>().swap(map_frequency);
         sort(vect.begin(), vect.end());
         vect = AlgShenFano(vect, in_buf_size);
         uint64_t code_size = 0;
@@ -244,12 +243,12 @@ private:
         for (int i = 0; i < vect.size(); i++) {
             vect[i].code.erase();
         }
-        std::vector<Character> ().swap(vect);
+        std::vector<Character>().swap(vect);
         CompressMap(code_size, map_size, map_codes);
         for (auto &key : map_codes) {
             key.second.erase();
         }
-        std::unordered_map<char, std::string> ().swap(map_codes);
+        std::unordered_map<char, std::string>().swap(map_codes);
     }
 
 
@@ -294,7 +293,7 @@ private:
         for (auto &key : map_frequency) {
             lst.push_back(Node(key.first, key.second, ""));
         }
-        std::unordered_map<char, uint64_t> ().swap(map_frequency);
+        std::unordered_map<char, uint64_t>().swap(map_frequency);
         lst.sort();
         std::list<Node> tree_list;
         bool inserted;
@@ -328,16 +327,16 @@ private:
         for (auto iter = tree_list.begin(); iter != tree_list.end(); iter++) {
             iter->code.erase();
         }
-        std::list<Node> ().swap(tree_list);
+        std::list<Node>().swap(tree_list);
         for (auto iter = lst.begin(); iter != lst.end(); iter++) {
             iter->code.erase();
         }
-        std::list<Node> ().swap(lst);
+        std::list<Node>().swap(lst);
         CompressMap(code_size, map_size, map_codes);
         for (auto &key : map_codes) {
             key.second.erase();
         }
-        std::unordered_map<char, std::string> ().swap(map_codes);
+        std::unordered_map<char, std::string>().swap(map_codes);
     }
 
 
@@ -469,7 +468,7 @@ private:
             sort(block.begin(), block.end());
             for (int j = 0; j < block_size; j++) {
                 out_buffer[c++] = block[j][block_size - 1];
-                if (block[j].size()==block_size+1) {
+                if (block[j].size() == block_size + 1) {
                     out_index = j;
                 }
                 block[j].clear();
@@ -477,9 +476,9 @@ private:
             out_buffer[c++] = out_index;
         }
         for (int i = 0; i < block.size(); i++) {
-            std::vector<char> ().swap(block[i]);
+            std::vector<char>().swap(block[i]);
         }
-        std::vector<std::vector<char>> ().swap(block);
+        std::vector<std::vector<char>>().swap(block);
     }
 
     void DemodificationBWT() {
@@ -520,9 +519,9 @@ private:
                 out_buffer[c++] = block[ind];
             } while (ind != out_index);
         }
-        std::vector<char> ().swap(block_sort);
-        std::vector<char> ().swap(block);
-        std::vector<int> ().swap(key);
+        std::vector<char>().swap(block_sort);
+        std::vector<char>().swap(block);
+        std::vector<int>().swap(key);
         out_buf_size = c;
         UnmapViewOfFile(out_buffer);
         SetFilePointer(out_file, out_buf_size % ((uint64_t) (1) << 32), (PLONG) (out_buf_size / ((uint64_t) (1) << 32)),
@@ -598,27 +597,6 @@ public:
     }
 };
 
-std::string OpenFileDialog() {
-    OPENFILENAME ofn;
-    TCHAR szFile[260] = {0};
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = sizeof(szFile);
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = nullptr;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = nullptr;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    if (GetOpenFileName(&ofn) == TRUE) {
-        return ofn.lpstrFile;
-    } else {
-        throw "Choose File";
-        return nullptr;
-    }
-}
-
 int main() {
     std::string input;
     std::string mode, alg;
@@ -629,8 +607,9 @@ int main() {
             std::cout << "Enter compression algorithm (SHF/HUFF/RLE/BWT): ";
             std::cin >> alg;
         }
+        std::cout <<  "Enter file name(in English): ";
+        std::cin >> input;
         try {
-            input = OpenFileDialog();
             Compression *cmp = new Compression(input, mode, alg);
             cmp->PrintInformation();
             delete cmp;
